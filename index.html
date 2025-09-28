@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WatchFenny</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Adsterra script -->
+<script type='text/javascript' src='//pl27706575.revenuecpmgate.com/43/08/fd/4308fd0c92978073c8ed9c0d58c16d99.js'></script>
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0f0f0f;
+}
+.movie-row {
+  display: flex;
+  overflow-x: auto;
+  padding: 20px 0;
+  gap: 10px;
+}
+.movie-poster {
+  min-width: 200px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+.movie-poster:hover {
+  transform: scale(1.05);
+}
+.banner {
+  height: 70vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: 50px;
+}
+</style>
+</head>
+<body class="bg-black text-white">
+
+<!-- Navbar -->
+<nav class="fixed top-0 w-full bg-black bg-opacity-90 z-50 p-4">
+  <div class="container mx-auto flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-red-600">WatchFenny</h1>
+    <div class="space-x-4">
+      <button class="hover:text-gray-300">Home</button>
+      <button class="hover:text-gray-300">Movies</button>
+      <button class="hover:text-gray-300">TV Shows</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Banner -->
+<div id="banner" class="banner mt-16">
+  <div class="max-w-2xl">
+    <h2 id="bannerTitle" class="text-4xl font-bold mb-4">Loading...</h2>
+    <p id="bannerDescription" class="text-lg mb-6">Loading description...</p>
+    <button class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold" onclick="openModal(0, 'movie')">Play</button>
+  </div>
+</div>
+
+<!-- Movie Rows -->
+<div class="container mx-auto px-4 mt-8">
+  <div id="movieRows">
+    <!-- Rows will be populated by JavaScript -->
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex items-center justify-center">
+  <div class="bg-gray-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-start mb-4">
+        <h3 id="modalTitle" class="text-2xl font-bold">Movie Title</h3>
+        <button onclick="closeModal()" class="text-white text-2xl hover:text-red-600">×</button>
+      </div>
+      <div id="modalContent" class="space-y-4">
+        <!-- Modal content will be populated -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 py-8 mt-12">
+  <div class="container mx-auto text-center">
+    <p>&copy; 2024 WatchFenny. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original/';
+
+// --- FIXED API requests (remove leading slashes) ---
+const requests = {
+    fetchNetflixOriginals: `discover/tv?with_networks=213`,
+    fetchTrending: `trending/all/week?language=en-US`,
+    fetchTopRated: `movie/top_rated?language=en-US`,
+    fetchActionMovies: `discover/movie?with_genres=28`,
+    fetchComedyMovies: `discover/movie?with_genres=35`,
+    fetchHorrorMovies: `discover/movie?with_genres=27`,
+    fetchRomanceMovies: `discover/movie?with_genres=10749`,
+    fetchSciFiMovies: `discover/movie?with_genres=878`,
+    fetchThrillerMovies: `discover/movie?with_genres=53`,
+    fetchAnimationMovies: `discover/movie?with_genres=16`,
+    fetchTvShows: `discover/tv?with_genres=10759`,
+    fetchDocumentaries: `discover/movie?with_genres=99`,
+};
+
+// --- Fetch wrappers calling Netlify function ---
+async function fetchData(endpoint) {
+    try {
+        console.log('Fetching:', endpoint);
+        const response = await fetch(`/.netlify/functions/movie?endpoint=${encodeURIComponent(endpoint)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Fetched data:', data);
+        return data.results || [];
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        return [];
+    }
+}
+
+async function fetchMovieDetails(movieId, mediaType) {
+    const type = mediaType === 'tv' ? 'tv' : 'movie';
+    try {
+        const url = `/${type}/${movieId}?language=en-US&append_to_response=videos,watch/providers`;
+        const response = await fetch(`/.netlify/functions/movie?endpoint=${encodeURIComponent(url)}`);
+        
+        if (!response.ok) throw new Error('Failed to fetch details');
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching movie details:", error);
+        return null;
+    }
+}
+
+// --- UI Functions ---
+function truncate(str, n) {
+    return str?.length > n ? str.substr(0, n - 1) + "..." : str;
+}
+
+function createMovieRow(title, movies, rowId) {
+    if (!movies || movies.length === 0) return '';
+    
+    return `
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold mb-4">${title}</h3>
+            <div class="movie-row" id="row-${rowId}">
+                ${movies.map((movie, index) => `
+                    <img 
+                        src="${IMAGE_BASE_URL}${movie.poster_path || movie.backdrop_path}" 
+                        alt="${movie.title || movie.name}"
+                        class="movie-poster cursor-pointer"
+                        onclick="openModal(${index}, '${movie.media_type || 'movie'}', '${rowId}')"
+                    >
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+let currentMovies = {};
+let currentRowId = '';
+
+function openModal(index, mediaType, rowId) {
+    currentRowId = rowId;
+    const movies = currentMovies[rowId];
+    if (!movies || !movies[index]) return;
+    
+    const movie = movies[index];
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalTitle.textContent = movie.title || movie.name;
+    modalContent.innerHTML = `
+        <img src="${IMAGE_BASE_URL}${movie.backdrop_path}" alt="${movie.title || movie.name}" class="w-full h-64 object-cover rounded-lg">
+        <p>${movie.overview || 'No description available.'}</p>
+        <div class="flex space-x-4">
+            <button class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg">Play</button>
+            <button class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg">Watch Later</button>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+// --- Initialize App ---
+async function init() {
+    try {
+        console.log('Initializing app...');
+        
+        // Load banner with trending movies
+        const trending = await fetchData(requests.fetchTrending);
+        if (trending.length > 0) {
+            const randomMovie = trending[Math.floor(Math.random() * trending.length)];
+            document.getElementById('banner').style.backgroundImage = `url('${IMAGE_BASE_URL}${randomMovie.backdrop_path}')`;
+            document.getElementById('bannerTitle').textContent = randomMovie.title || randomMovie.name;
+            document.getElementById('bannerDescription').textContent = truncate(randomMovie.overview, 150);
+        }
+        
+        // Load all movie rows
+        const movieRows = document.getElementById('movieRows');
+        
+        for (const [key, endpoint] of Object.entries(requests)) {
+            console.log(`Loading: ${key}`);
+            const movies = await fetchData(endpoint);
+            currentMovies[key] = movies;
+            
+            if (movies.length > 0) {
+                const title = key.replace('fetch', '').replace(/([A-Z])/g, ' $1').trim();
+                movieRows.innerHTML += createMovieRow(title, movies, key);
+            }
+        }
+        
+        console.log('App initialized successfully');
+    } catch (error) {
+        console.error('Error initializing app:', error);
+    }
+}
+
+// Start the app
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
