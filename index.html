@@ -4,99 +4,137 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WatchFenny</title>
+<!-- Tailwind CSS for styling -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts for the Netflix look -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Adsterra script -->
+<!-- Ad Script -->
 <script type='text/javascript' src='//pl27706575.revenuecpmgate.com/43/08/fd/4308fd0c92978073c8ed9c0d58c16d99.js'></script>
 <style>
+/* Custom styles to perfect the Netflix look */
 body {
-  font-family: 'Inter', sans-serif;
-  background: #0f0f0f;
+    background-color: #141414;
+    font-family: 'Inter', sans-serif;
 }
-.movie-row {
-  display: flex;
-  overflow-x: auto;
-  padding: 20px 0;
-  gap: 10px;
+/* Stops body scrolling when the modal is open */
+body.modal-open {
+    overflow: hidden;
 }
-.movie-poster {
-  min-width: 200px;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
+/* Hides the scrollbar but allows scrolling in movie rows */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }
-.movie-poster:hover {
-  transform: scale(1.05);
+.scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 }
-.banner {
-  height: 70vh;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: flex-end;
-  padding: 50px;
+/* Creates the fade-out effect at the bottom of the banner */
+.banner-fade-bottom {
+    height: 7.4rem;
+    background-image: linear-gradient(180deg, transparent, rgba(37,37,37,.61), #141414);
+}
+/* Ensures the video player maintains a 16:9 aspect ratio */
+#modal-video-container {
+    aspect-ratio: 16 / 9;
+}
+/* Styles for the scroll arrows on movie rows */
+.scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    border-radius: 9999px; /* fully rounded */
+    width: 2.5rem; /* 40px */
+    height: 2.5rem; /* 40px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.row-container:hover .scroll-arrow {
+    opacity: 1;
+}
+.scroll-arrow.left {
+    left: 0.5rem;
+}
+.scroll-arrow.right {
+    right: 0.5rem;
 }
 </style>
 </head>
-<body class="bg-black text-white">
-
-<!-- Navbar -->
-<nav class="fixed top-0 w-full bg-black bg-opacity-90 z-50 p-4">
-  <div class="container mx-auto flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-red-600">WatchFenny</h1>
-    <div class="space-x-4">
-      <button class="hover:text-gray-300">Home</button>
-      <button class="hover:text-gray-300">Movies</button>
-      <button class="hover:text-gray-300">TV Shows</button>
-    </div>
-  </div>
+<body class="text-white">
+<!-- Navbar: Stays at the top -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 p-4 transition-colors duration-500">
+<div class="flex justify-between items-center">
+<div>
+<a href="#" class="text-2xl md:text-3xl font-extrabold text-red-600 no-underline hover:opacity-80 transition">
+WatchFenny
+</a>
+<p class="text-xs text-gray-400 mt-1">Stream Movies & TV Shows</p>
+</div>
+<img class="h-8 w-8 rounded" src="https://placehold.co/32x32/E50914/FFFFFF?text=W" alt="Profile Avatar">
+</div>
 </nav>
-
-<!-- Banner -->
-<div id="banner" class="banner mt-16">
-  <div class="max-w-2xl">
-    <h2 id="bannerTitle" class="text-4xl font-bold mb-4">Loading...</h2>
-    <p id="bannerDescription" class="text-lg mb-6">Loading description...</p>
-    <button class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold" onclick="openModal(0, 'movie')">Play</button>
-  </div>
+<!-- Banner Section: The big featured movie at the top -->
+<header id="banner" class="relative text-white object-cover bg-cover bg-center" style="height: 56.25vw; max-height: 800px;">
+<div class="ml-8 pt-48 md:pt-56 h-full">
+<h1 id="banner-title" class="text-3xl md:text-6xl font-extrabold pb-2"></h1>
+<div class="flex space-x-2 my-4">
+<button id="banner-play-btn" class="bg-white text-black font-bold rounded px-6 md:px-8 py-2 hover:bg-gray-300 transition text-sm md:text-base flex items-center justify-center">
+<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+</svg>
+Play
+</button>
+<button id="banner-info-btn" class="bg-gray-500 bg-opacity-70 text-white font-bold rounded px-6 md:px-8 py-2 hover:bg-gray-600 transition text-sm md:text-base">
+More Info
+</button>
 </div>
-
-<!-- Movie Rows -->
-<div class="container mx-auto px-4 mt-8">
-  <div id="movieRows">
-    <!-- Rows will be populated by JavaScript -->
-  </div>
+<p id="banner-description" class="w-full md:w-[45rem] max-w-sm md:max-w-md pt-2 text-xs md:text-sm h-24"></p>
 </div>
-
-<!-- Modal -->
-<div id="modal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex items-center justify-center">
-  <div class="bg-gray-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-    <div class="p-6">
-      <div class="flex justify-between items-start mb-4">
-        <h3 id="modalTitle" class="text-2xl font-bold">Movie Title</h3>
-        <button onclick="closeModal()" class="text-white text-2xl hover:text-red-600">×</button>
-      </div>
-      <div id="modalContent" class="space-y-4">
-        <!-- Modal content will be populated -->
-      </div>
-    </div>
-  </div>
+<div class="absolute bottom-0 left-0 right-0 banner-fade-bottom"></div>
+</header>
+<!-- Movie Rows: Container for all the movie carousels -->
+<main id="movie-rows" class="px-4 md:px-10 pb-16">
+<!-- Rows will be dynamically added here by JavaScript -->
+</main>
+<!-- Details Modal: Pops up when a movie is clicked -->
+<div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+<div id="modal-container" class="relative bg-zinc-900 w-full max-w-4xl rounded-lg shadow-lg overflow-hidden">
+<button id="modal-close-btn" class="absolute top-3 right-3 text-white bg-black bg-opacity-50 rounded-full h-8 w-8 flex items-center justify-center z-20 hover:bg-opacity-75 transition">
+<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+</svg>
+</button>
+<div id="modal-video-container" class="w-full bg-black">
+<iframe id="youtube-player" class="w-full h-full" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<div id="no-trailer-message" class="hidden w-full h-full flex items-center justify-center text-lg">Trailer not available</div>
 </div>
-
-<!-- Footer -->
-<footer class="bg-gray-900 py-8 mt-12">
-  <div class="container mx-auto text-center">
-    <p>&copy; 2024 WatchFenny. All rights reserved.</p>
-  </div>
-</footer>
-
+<div id="modal-details" class="p-6">
+<h2 id="modal-title" class="text-2xl font-bold"></h2>
+<p id="modal-description" class="text-sm mt-2 text-zinc-300"></p>
+<div id="watch-providers" class="mt-4">
+<h3 class="text-lg font-semibold">Watch Now On:</h3>
+<div id="providers-list" class="flex flex-wrap gap-4 mt-2"></div>
+<p id="no-providers-message" class="hidden text-zinc-400 mt-2">Streaming information not available for this region.</p>
+</div>
+</div>
+</div>
+</div>
 <script>
+// --- CONFIGURATION ---
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original/';
+const ADSTERRA_URL = 'https://www.revenuecpmgate.com/nrmw6hswh7?key=cab87f7f10cb11cbed7a223557a84eee';
 
-// --- FIXED API requests (remove leading slashes) ---
+// --- FIXED: Use Netlify Function Endpoints ---
 const requests = {
     fetchNetflixOriginals: `discover/tv?with_networks=213`,
     fetchTrending: `trending/all/week?language=en-US`,
@@ -112,18 +150,19 @@ const requests = {
     fetchDocumentaries: `discover/movie?with_genres=99`,
 };
 
-// --- Fetch wrappers calling Netlify function ---
+// --- DOM ELEMENT SELECTORS ---
+const movieRowsContainer = document.getElementById('movie-rows');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalCloseBtn = document.getElementById('modal-close-btn');
+const youtubePlayer = document.getElementById('youtube-player');
+
+// --- CORE FUNCTIONS ---
 async function fetchData(endpoint) {
     try {
-        console.log('Fetching:', endpoint);
+        // FIXED: Use Netlify function instead of direct TMDB API
         const response = await fetch(`/.netlify/functions/movie?endpoint=${encodeURIComponent(endpoint)}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        console.log('Fetched data:', data);
         return data.results || [];
     } catch (error) {
         console.error("Error fetching data:", error);
@@ -132,11 +171,12 @@ async function fetchData(endpoint) {
 }
 
 async function fetchMovieDetails(movieId, mediaType) {
+    // Determine if it's a TV show or a movie for the correct API path
     const type = mediaType === 'tv' ? 'tv' : 'movie';
     try {
+        // FIXED: Use Netlify function
         const url = `/${type}/${movieId}?language=en-US&append_to_response=videos,watch/providers`;
         const response = await fetch(`/.netlify/functions/movie?endpoint=${encodeURIComponent(url)}`);
-        
         if (!response.ok) throw new Error('Failed to fetch details');
         return await response.json();
     } catch (error) {
@@ -145,97 +185,223 @@ async function fetchMovieDetails(movieId, mediaType) {
     }
 }
 
-// --- UI Functions ---
-function truncate(str, n) {
-    return str?.length > n ? str.substr(0, n - 1) + "..." : str;
+function truncate(string, n) {
+    return string?.length > n ? string.substr(0, n - 1) + '...' : string;
 }
 
-function createMovieRow(title, movies, rowId) {
-    if (!movies || movies.length === 0) return '';
-    
-    return `
-        <div class="mb-8">
-            <h3 class="text-2xl font-bold mb-4">${title}</h3>
-            <div class="movie-row" id="row-${rowId}">
-                ${movies.map((movie, index) => `
-                    <img 
-                        src="${IMAGE_BASE_URL}${movie.poster_path || movie.backdrop_path}" 
-                        alt="${movie.title || movie.name}"
-                        class="movie-poster cursor-pointer"
-                        onclick="openModal(${index}, '${movie.media_type || 'movie'}', '${rowId}')"
-                    >
-                `).join('')}
-            </div>
-        </div>
-    `;
-}
+// Updated function to include scroll arrows
+function createMovieRow(title, movies, isLargeRow = false) {
+    const row = document.createElement('div');
+    row.className = 'my-8';
 
-let currentMovies = {};
-let currentRowId = '';
+    const rowTitle = document.createElement('h2');
+    rowTitle.className = 'text-xl md:text-2xl font-bold mb-2';
+    rowTitle.textContent = title;
+    row.appendChild(rowTitle);
 
-function openModal(index, mediaType, rowId) {
-    currentRowId = rowId;
-    const movies = currentMovies[rowId];
-    if (!movies || !movies[index]) return;
-    
-    const movie = movies[index];
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalContent = document.getElementById('modalContent');
-    
-    modalTitle.textContent = movie.title || movie.name;
-    modalContent.innerHTML = `
-        <img src="${IMAGE_BASE_URL}${movie.backdrop_path}" alt="${movie.title || movie.name}" class="w-full h-64 object-cover rounded-lg">
-        <p>${movie.overview || 'No description available.'}</p>
-        <div class="flex space-x-4">
-            <button class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg">Play</button>
-            <button class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg">Watch Later</button>
-        </div>
-    `;
-    
-    modal.classList.remove('hidden');
-}
+    const rowContainer = document.createElement('div');
+    rowContainer.className = 'relative row-container';
+    row.appendChild(rowContainer);
 
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
+    const postersContainer = document.createElement('div');
+    // Using scrollbar-hide class from custom CSS
+    postersContainer.className = 'flex overflow-y-hidden overflow-x-scroll p-2 -ml-2 scrollbar-hide';
+    postersContainer.setAttribute('role', 'list'); // Accessibility hint
 
-// --- Initialize App ---
-async function init() {
-    try {
-        console.log('Initializing app...');
+    rowContainer.appendChild(postersContainer);
+
+    movies.forEach(movie => {
+        const imagePath = isLargeRow ? movie.poster_path : movie.backdrop_path;
+        if (!imagePath) return; // Skip if no image path
+
+        const poster = document.createElement('img');
+        poster.src = `${IMAGE_BASE_URL}${imagePath}`;
+        poster.alt = movie.name || movie.title;
+        poster.loading = 'lazy';
+        poster.dataset.movieId = movie.id;
+        poster.dataset.mediaType = movie.media_type || (isLargeRow ? 'tv' : 'movie');
         
-        // Load banner with trending movies
-        const trending = await fetchData(requests.fetchTrending);
-        if (trending.length > 0) {
-            const randomMovie = trending[Math.floor(Math.random() * trending.length)];
-            document.getElementById('banner').style.backgroundImage = `url('${IMAGE_BASE_URL}${randomMovie.backdrop_path}')`;
-            document.getElementById('bannerTitle').textContent = randomMovie.title || randomMovie.name;
-            document.getElementById('bannerDescription').textContent = truncate(randomMovie.overview, 150);
+        // Dynamic classes based on row size
+        poster.className = `object-contain transition-transform duration-300 hover:scale-105 md:hover:scale-110 cursor-pointer ${isLargeRow ? 'max-h-60' : 'max-h-28'} mr-3 rounded`;
+
+        poster.addEventListener('click', handlePosterClick);
+        postersContainer.appendChild(poster);
+    });
+
+    // Add scroll arrows
+    const scrollAmount = window.innerWidth * 0.8; // Scroll 80% of viewport width
+
+    const leftArrow = document.createElement('button');
+    leftArrow.className = 'scroll-arrow left';
+    leftArrow.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    leftArrow.addEventListener('click', () => {
+        postersContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+    rowContainer.appendChild(leftArrow);
+
+    const rightArrow = document.createElement('button');
+    rightArrow.className = 'scroll-arrow right';
+    rightArrow.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>';
+    rightArrow.addEventListener('click', () => {
+        postersContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+    rowContainer.appendChild(rightArrow);
+
+    movieRowsContainer.appendChild(row);
+}
+
+// --- EVENT HANDLERS & MODAL LOGIC ---
+async function handlePosterClick(event) {
+    // Open ad on any movie click
+    window.open(ADSTERRA_URL, '_blank'); 
+    
+    const { movieId, mediaType } = event.target.dataset;
+    if (movieId && mediaType) {
+        const details = await fetchMovieDetails(movieId, mediaType);
+        if (details) {
+            displayModalWithDetails(details);
         }
-        
-        // Load all movie rows
-        const movieRows = document.getElementById('movieRows');
-        
-        for (const [key, endpoint] of Object.entries(requests)) {
-            console.log(`Loading: ${key}`);
-            const movies = await fetchData(endpoint);
-            currentMovies[key] = movies;
-            
-            if (movies.length > 0) {
-                const title = key.replace('fetch', '').replace(/([A-Z])/g, ' $1').trim();
-                movieRows.innerHTML += createMovieRow(title, movies, key);
-            }
-        }
-        
-        console.log('App initialized successfully');
-    } catch (error) {
-        console.error('Error initializing app:', error);
     }
 }
 
-// Start the app
-document.addEventListener('DOMContentLoaded', init);
+function displayModalWithDetails(details) {
+    document.getElementById('modal-title').textContent = details.name || details.title;
+    document.getElementById('modal-description').textContent = details.overview || "No description available.";
+
+    // 1. Handle Trailer
+    const trailer = details.videos?.results.find(video => video.site === 'YouTube' && video.type.includes('Trailer'));
+    const noTrailerMessage = document.getElementById('no-trailer-message');
+
+    if (trailer) {
+        // Use controls=1 to allow users to interact with the player if they choose
+        youtubePlayer.src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&controls=1&rel=0`;
+        youtubePlayer.classList.remove('hidden');
+        noTrailerMessage.classList.add('hidden');
+    } else {
+        youtubePlayer.src = '';
+        youtubePlayer.classList.add('hidden');
+        noTrailerMessage.classList.remove('hidden');
+    }
+
+    // 2. Handle Watch Providers
+    const providersList = document.getElementById('providers-list');
+    const noProvidersMessage = document.getElementById('no-providers-message');
+    providersList.innerHTML = '';
+
+    const providers = details['watch/providers']?.results?.US?.flatrate; // Targeting US providers
+    
+    if (providers && providers.length > 0) {
+        providers.forEach(provider => {
+            const providerLink = document.createElement('a');
+            const movieTitle = details.name || details.title;
+            
+            // Create a Google Search link to find the streaming page
+            providerLink.href = `https://www.google.com/search?q=Watch ${encodeURIComponent(movieTitle)} on ${encodeURIComponent(provider.provider_name)}`;
+            providerLink.target = '_blank';
+            providerLink.rel = 'noopener noreferrer';
+            
+            const providerLogo = document.createElement('img');
+            providerLogo.src = `${IMAGE_BASE_URL}${provider.logo_path}`;
+            providerLogo.title = `Watch on ${provider.provider_name}`;
+            providerLogo.className = 'h-10 w-10 rounded-lg transition-transform hover:scale-110';
+
+            providerLink.appendChild(providerLogo);
+            providersList.appendChild(providerLink);
+        });
+        noProvidersMessage.classList.add('hidden');
+    } else {
+        noProvidersMessage.classList.remove('hidden');
+    }
+
+    // 3. Display Modal and block background scrolling
+    modalOverlay.classList.remove('hidden');
+    document.body.classList.add('modal-open'); // <-- New: Block background scroll
+}
+
+function closeModal() {
+    modalOverlay.classList.add('hidden');
+    youtubePlayer.src = '';
+    document.body.classList.remove('modal-open'); // <-- New: Restore background scroll
+}
+
+// --- INITIALIZATION ---
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Set up the Banner
+    const bannerMovies = await fetchData(requests.fetchNetflixOriginals);
+    if(bannerMovies.length > 0) {
+        const bannerMovie = bannerMovies[Math.floor(Math.random() * bannerMovies.length)];
+        
+        document.getElementById('banner').style.backgroundImage = `url('${IMAGE_BASE_URL}${bannerMovie.backdrop_path}')`;
+        document.getElementById('banner-title').textContent = bannerMovie.name || bannerMovie.title || bannerMovie.original_name;
+        document.getElementById('banner-description').textContent = truncate(bannerMovie.overview, 150);
+        
+        const bannerPlayButton = document.getElementById('banner-play-btn');
+        const bannerMoreInfoButton = document.getElementById('banner-info-btn');
+
+        const showBannerModal = async () => {
+            window.open(ADSTERRA_URL, '_blank'); // Open ad
+            const details = await fetchMovieDetails(bannerMovie.id, bannerMovie.media_type || 'tv');
+            if (details) {
+                displayModalWithDetails(details);
+            }
+        };
+        bannerPlayButton?.addEventListener('click', showBannerModal);
+        bannerMoreInfoButton?.addEventListener('click', showBannerModal);
+    }
+
+    // 2. Set up the Movie Rows
+    const allRows = [
+        { title: "WatchFenny Originals", endpoint: requests.fetchNetflixOriginals, isLarge: true },
+        { title: "Trending Now", endpoint: requests.fetchTrending },
+        { title: "Top Rated", endpoint: requests.fetchTopRated },
+        { title: "Action & Adventure (TV)", endpoint: requests.fetchTvShows },
+        { title: "Action Movies", endpoint: requests.fetchActionMovies },
+        { title: "Animation", endpoint: requests.fetchAnimationMovies },
+        { title: "Comedy Movies", endpoint: requests.fetchComedyMovies },
+        { title: "Horror Movies", endpoint: requests.fetchHorrorMovies },
+        { title: "Thriller Movies", endpoint: requests.fetchThrillerMovies },
+        { title: "Romance Movies", endpoint: requests.fetchRomanceMovies },
+        { title: "Sci-Fi Movies", endpoint: requests.fetchSciFiMovies },
+        { title: "Documentaries", endpoint: requests.fetchDocumentaries },
+    ];
+
+    // Fetch all data concurrently
+    Promise.all(allRows.map(row => fetchData(row.endpoint))).then(results => {
+        results.forEach((movies, index) => {
+            const rowConfig = allRows[index];
+            if (movies && movies.length > 0) {
+                // Filter out movies with no backdrop/poster for cleaner rows
+                const filteredMovies = movies.filter(m => m.backdrop_path || m.poster_path);
+                createMovieRow(rowConfig.title, filteredMovies, rowConfig.isLarge);
+            }
+        });
+    });
+
+    // 3. Set up Modal Close Listeners
+    modalCloseBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (event) => {
+        // Close modal if user clicks on the overlay (not the inner container)
+        if (event.target === modalOverlay) closeModal();
+    });
+    document.addEventListener('keydown', (event) => {
+        // Close modal on ESC key
+        if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+});
+
+// --- UI EFFECTS ---
+window.addEventListener('scroll', () => {
+    const navbar = document.getElementById('navbar');
+    // Change navbar background to black after scrolling 100px
+    if (window.scrollY > 100) {
+        navbar.style.backgroundColor = '#141414';
+    } else {
+        navbar.style.backgroundColor = 'transparent';
+    }
+});
 </script>
 </body>
 </html>
